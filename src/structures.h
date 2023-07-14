@@ -61,6 +61,7 @@ struct individual{
     int time_to_delivery; /* -1 = not pregnant ; any positive int = number of time steps to delivery */
     //////// BE CAREFUL THIS IS TIME_STEP DEPENDENT, CHANGE IF TIME_STEP CHANGES ////////
 
+    int HIV_awareness; /* -1 if uninfected, 0 if infected but unaware, 1 if infected and aware*/
     int HIV_status; /* 0 if uninfected, 1 if infected in acute infection, 2 if infected not in acute infection */
     int ART_status; /* -1 if never tested positive, 0 if positive but not yet on ART (or dropped out), 1 if on ART for <6 months, 2 if on ART for >=6 months and virally suppressed, 3 if on ART for >=6 months and not virally suppressed. */
     double t_start_art; /* Time at which the individual first started ART (used in cost-effectiveness) */
@@ -733,6 +734,7 @@ typedef struct{
     population_size *n_infected_wide_age_group;
     population_size *n_newly_infected_wide_age_group;
 
+    long n_unaware[N_GENDER];
     long n_newly_infected_total;
     long n_newly_infected_total_from_outside;
     long n_newly_infected_total_from_acute;

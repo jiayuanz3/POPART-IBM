@@ -355,6 +355,7 @@ void create_new_individual(individual *new_adult, double t, parameters *param, i
     /* Assign HIV status, allowing for the fact that some children may have had perinatal transmission (children are divided into HIV+/- at birth). 
      * Note that CHRONIC is 2 so need an if statement here. */
     if (hivstatus==0){
+        new_adult->HIV_awareness = UNINFECTED;
         new_adult->HIV_status = UNINFECTED;
         new_adult->ART_status = ARTNEG;
         new_adult->next_HIV_event = NOEVENT; /* Initialize at dummy value. */
@@ -399,6 +400,8 @@ void create_new_individual(individual *new_adult, double t, parameters *param, i
         printf("+++ One new HIV+ (new adult) \n");
         fflush(stdout);
 
+        new_adult->HIV_status = UNAWARE;
+        patch[p].n_unaware[new_adult->gender] ++;
         new_adult->HIV_status = CHRONIC;
         new_adult->ART_status = LTART_VS;                // Assume any new adult who has made it this far is successfully on ART 
         new_adult->SPVL_num_G = 0;                          // WRONG!!!
@@ -1713,6 +1716,9 @@ void deaths_natural_causes(double t, patch_struct *patch, int p,
                     person_dying = patch[p].age_list->age_list_by_gender[g]->age_group[ai][(int) patch[p].new_deaths[i]];
                     
                     // Now remove people who have died and to update their partnerships
+                    if (person_dying->HIV_awareness == UNAWARE) {
+                        patch[p].n_unaware[person_dying->gender]--;
+                    }
                     achecktemp = get_age_index(person_dying->DoB, 
                         patch[p].param-> start_time_simul);
                     

@@ -235,7 +235,6 @@ int main(int argc,char *argv[]){
         }
     }
 
-
     /*********************************************************/
     /*** Allocation of memory                              ***/
     /*********************************************************/
@@ -266,11 +265,9 @@ int main(int argc,char *argv[]){
             alloc_pc_cohort_data(&patch[p].PC_cohort_data, pc_enrolment_round, pc_size);
         }
     }
-
     /* allocation of memory for debug variables */
     /* everything inside debug_struct is allocated statically so no need to allocate more memory */
     debug = malloc(sizeof(debug_struct));
-
     /*****************************************************/
     /*** READING PARAMETERS AND FITTING DATA           ***/
     /*****************************************************/
@@ -280,7 +277,9 @@ int main(int argc,char *argv[]){
     (is_counterfactual==1). */
 
     /* Read all the parameter sets - there should be n_runs of them. */
+    printf("----aaa------");
     read_param(input_file_directory, allrunparameters, n_runs, patch);
+    printf("----zzz------");
     
     for(i = 0; i < n_runs; i++){
         for(p = 0; p < NPATCHES; p++){
@@ -300,6 +299,7 @@ int main(int argc,char *argv[]){
         }
         printf("Making this run a counterfactual\n");
     }
+    
 
     /* Get country: country_setting values are 1 for Zambia and 2 for South Africa.
     There are constants defined in constants.h for this (ZAMBIA and SOUTH_AFRICA)
@@ -321,6 +321,7 @@ int main(int argc,char *argv[]){
     tests ever done, number of CD4 tests ever done, number on ART, number on ART and HIV+ etc. */
     output_struct *output;
     alloc_output_memory(&output);
+    printf("----bbb------");
 
     // Define the variable calibration_output_filename
     char *calibration_output_filename[NPATCHES];
@@ -346,6 +347,7 @@ int main(int argc,char *argv[]){
         initialise_partners_outside_community_file(output_file_directory, 0);
     }
 
+    printf("----ggg------");
     /****************************************************************************/
     /*   Loop over parameter sets from i_startrun...(i_startrun + n_startrun)   */
     /*   Remember C convention that start at 0 so index runs                    */

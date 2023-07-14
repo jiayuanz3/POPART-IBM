@@ -41,6 +41,7 @@ void blank_individual_array(individual *individual_population, int id_counter){
     int i_id;
     individual blank_person_template;
 
+    blank_person_template.HIV_awareness = DUMMYVALUE;
     blank_person_template.HIV_status = DUMMYVALUE;
     blank_person_template.ART_status = DUMMYVALUE;
     blank_person_template.cd4 = DUMMYVALUE;
@@ -125,6 +126,7 @@ void reinitialize_arrays_to_default(int p, patch_struct *patch, all_partnerships
         patch[p].PC_cohort_data->PC_cohort_counter[i] = 0;
 
     for (g=0; g<N_GENDER; g++){
+        patch[p].n_unaware[g] = 0;
         for (ac=0; ac<(MAX_AGE-AGE_CHIPS+1); ac++){
             for (chips_round=0; chips_round<NCHIPSROUNDS; chips_round++){
                 output->NCHIPS_VISITED[p][g][ac][chips_round] = 0;

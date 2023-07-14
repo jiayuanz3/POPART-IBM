@@ -823,7 +823,7 @@ void update_annual_outputs_npartnersbygenderagerisk(individual *individual, long
 
 void store_annual_outputs(patch_struct *patch, int p, output_struct *output, 
     all_partnerships *overall_partnerships, int *n_infected_total, int year, int PCdata){
-    /* Stores annual data (such as incidence, prevalence, number on ART, cum. no. of tests etc.)
+    /* Stores annual data (such as incidence, prevalence, awareness, number on ART, cum. no. of tests etc.)
     for a single patch (patch `p`) in the output structure `output`.  
     
     This function populates a range of string variables (e.g. `temp_string`) with output summaries
@@ -867,11 +867,13 @@ void store_annual_outputs(patch_struct *patch, int p, output_struct *output,
     long nincident=0;
     long npop_m = 0;
     long npop_f = 0;
+    long nunaware[N_GENDER] = {0, 0};
     long npop;
     long npop_check = 0;
     long npositive_m=0;
     long npositive_f=0;
     long npositive;
+    long naware;
     long npositive_dead = 0;
     long n_dead = 0;
     long NArt_m = 0;
@@ -895,6 +897,7 @@ void store_annual_outputs(patch_struct *patch, int p, output_struct *output,
     int current_cd4_guidelines = art_cd4_eligibility_group(patch[p].param,(double) year);
 
     double prop_annual_acute;
+    double prophivposaware;
     double prophivposonart;
 
     /* Temporary store of data from current year. */
@@ -925,6 +928,7 @@ void store_annual_outputs(patch_struct *patch, int p, output_struct *output,
     }
 
     for(g = 0; g < N_GENDER; g++){
+        nunaware[g] = patch[p].n_unaware[g];
         for(aa = MINAGE_COUNTED; aa < MAX_AGE_COUNTED; aa++){
             ai = aa + patch[p].age_list->age_list_by_gender[g]->youngest_age_group_index;
             while (ai>(MAX_AGE-AGE_ADULT-1)){
@@ -1025,6 +1029,10 @@ void store_annual_outputs(patch_struct *patch, int p, output_struct *output,
 
     npop = npop_m + npop_f;
     npositive = npositive_m + npositive_f;
+    naware = npositive;
+    for (g = 0; g < N_GENDER; g++) {
+        naware -= nunaware[g];
+    }
     
     /* Store number of positive people in n_infected_total: */
     *n_infected_total = npositive;
@@ -1040,13 +1048,14 @@ void store_annual_outputs(patch_struct *patch, int p, output_struct *output,
     
     if (npositive > 0){
         prophivposonart = (NArt_m + NArt_f)/(1.0*npositive);
+        prophivposaware = naware/(1.0*npositive);
     }else{
         prophivposonart = 0.0;
     }
     
     if(PCdata == 0){
         
-        sprintf(temp_string, "%i,%8.6f,%8.6f,%li,%li,%li,%li,%8.6f,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%6.4f,%li,%li,%li,%li,",
+        sprintf(temp_string, "%i,%8.6f,%8.6f,%li,%li,%li,%li,%8.6f,%8.6f,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%li,%6.4f,%li,%li,%li,%li,",
                 year,
                 npositive/(npop+0.0),
                 patch[p].PANGEA_N_ANNUALINFECTIONS/(npop - npositive + 0.0),
@@ -1054,12 +1063,15 @@ void store_annual_outputs(patch_struct *patch, int p, output_struct *output,
                 patch[p].n_newly_infected_total,
                 patch[p].n_newly_infected_total_from_outside,
                 patch[p].n_newly_infected_total_from_acute,
+                prophivposaware,
                 prophivposonart,
                 patch[p].PANGEA_N_ANNUALINFECTIONS,
                 npop,
                 npositive_m,
+                npositive_m - nunaware[MALE],
                 npop_m,
                 npositive_f,
+                npositive_f - nunaware[FEMALE],
                 npop_f,
                 patch[p].cumulative_outputs->N_total_HIV_tests_nonpopart,
                 patch[p].cumulative_outputs->N_total_HIV_tests_popart,
@@ -2527,10 +2539,10 @@ void write_annual_outputs(file_struct *file_data_store, output_struct *output, i
     /* Print the header of the file */
     fprintf(file_data_store->ANNUAL_OUTPUT_FILE[p],"Year,Prevalence,Incidence,NumberPositive,");
     fprintf(file_data_store->ANNUAL_OUTPUT_FILE[p],"NewCasesThisYear,NewCasesThisYearFromOutside,");
-    fprintf(file_data_store->ANNUAL_OUTPUT_FILE[p],"NewCasesThisYearFromAcute,PropHIVPosONART,");
+    fprintf(file_data_store->ANNUAL_OUTPUT_FILE[p],"NewCasesThisYearFromAcute, PropHIVPosAware, PropHIVPosONART,");
     fprintf(file_data_store->ANNUAL_OUTPUT_FILE[p],"NAnnual,TotalPopulation,");
     fprintf(file_data_store->ANNUAL_OUTPUT_FILE[p],
-        "NumberPositiveM,PopulationM,NumberPositiveF,PopulationF,");
+        "NumberPositiveM, NHIVPosAwareM, PopulationM,NumberPositiveF, NHIVPosAwareF, PopulationF,");
     fprintf(file_data_store->ANNUAL_OUTPUT_FILE[p],
         "CumulativeNonPopartHIVtests,CumulativePopartHIVtests,");
     fprintf(file_data_store->ANNUAL_OUTPUT_FILE[p],

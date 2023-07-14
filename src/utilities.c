@@ -2527,3 +2527,16 @@ void check_if_parameters_plausible(parameters *param){
         }
     }
 }
+
+double scaling_p_HIV_background_testing_female_current(int year, double p_HIV_background_testing_female_current) {
+
+    return p_HIV_background_testing_female_current * ((year-2018) * 0.1 + 1);
+}
+
+double scaling_p_collect_cd4_test_results_cd4_nonpopart(int year, double p_collect_cd4_test_results_cd4_nonpopart) {
+    // same amount of yearly increase until 2030
+    int yearly_increase = (0.95 - p_collect_cd4_test_results_cd4_nonpopart) / (2030 - 2018);
+    return p_collect_cd4_test_results_cd4_nonpopart + yearly_increase * (year - 2018);
+}
+
+

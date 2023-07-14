@@ -137,9 +137,9 @@ gsl_rng * rng;
 
 #define MAX_N_YEARS 200 /* Maximum number of years the simulation will run for */
 
-#define T_ROLLOUT_CHIPS_EVERYWHERE 2020 /* When we want post-popart CHiPs to roll out in contaminating patches. */
+#define T_ROLLOUT_CHIPS_EVERYWHERE 2050 /* When we want post-popart CHiPs to roll out in contaminating patches. */
 #define ROLL_OUT_CHIPS_INSIDE_PATCH 1
-#define T_STOP_ROLLOUT_CHIPS_INSIDE_PATCH 2100 /* When to stop roll out of CHiPs to inside patch */
+#define T_STOP_ROLLOUT_CHIPS_INSIDE_PATCH 2018 /* When to stop roll out of CHiPs to inside patch */
 
 #define ALLOW_COUNTERFACTUAL_ROLLOUT 0 /* Should post-PopART rollout of CHiPs be allowed in counterfactual simulations?  Defaul is that it's switched off*/
 
@@ -266,6 +266,10 @@ extern const char RISK_GP_NAMES[N_RISK][5];
 #define OLDEST_AGE_SEED_WITH_HIV 30 // This gives the maximum age group index where we introduce HIV (2=23-30).
 
 #define ALLOW_EMERGENCY_ART 1 /* 1 - allow people to start emergency ART. 0 - stop this from happening. */
+
+/* codes for awareness status */
+#define UNAWARE 1
+#define AWARE 2
 
 /* codes for HIV status */
 #define UNINFECTED 0

@@ -347,6 +347,7 @@ void set_up_population(int p, patch_struct *patch, population *pop){
     /* age_list->age_list_by_gender[g]->youngest_age_group_index is the index of the youngest age group array in age_list->age_list_by_gender[g]->age_groups[].
      * As the population ages this index moves (so we don't have to move all the arrays). By default we start it at zero. */
     for (g=0;g<N_GENDER;g++)
+        patch[p].n_unaware[g] = 0;
         patch[p].age_list->age_list_by_gender[g]->youngest_age_group_index = 0;
 
     /* Similarly for n_population_oneyearagegroups. */
@@ -369,6 +370,7 @@ void set_up_population(int p, patch_struct *patch, population *pop){
 
     /* Create a template individual structure to copy. These are the parts which are always in common: */
     person_template.patch_no = p;
+    person_template.HIV_awareness = UNINFECTED;
     person_template.HIV_status = UNINFECTED;
     person_template.ART_status = ARTNEG;
     person_template.t_sc = -1;                   /* Initialize at dummy value. */

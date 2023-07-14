@@ -510,6 +510,9 @@ void hiv_acquisition(individual* susceptible, double time_infect, patch_struct *
             patch[p].n_newly_infected, patch[p].age_list, patch[p].param, 
             patch[p].hiv_pos_progression, patch[p].n_hiv_pos_progression, 
             patch[p].size_hiv_pos_progression, patch[p].n_infected_cumulative, file_data_store);
+
+        // Update the number of unawared people in each patch
+        patch[p].n_unaware[susceptible->gender]++;
         
         // Increment counters
         patch[p].n_newly_infected_total++;
@@ -804,6 +807,7 @@ void new_infection(double time_infect, int SEEDEDINFECTION, individual* seroconv
     // For non-seed cases
     if(SEEDEDINFECTION == FALSE){
         // Person is now in acute stage.
+        seroconverter->HIV_awareness = UNAWARE;
         seroconverter->HIV_status = ACUTE;
         
         // Draw time to end of acute phase
@@ -823,6 +827,7 @@ void new_infection(double time_infect, int SEEDEDINFECTION, individual* seroconv
         // For seeded infections
         
         // Assume person is in chronic stage
+        seroconverter->HIV_awareness = UNAWARE;
         seroconverter->HIV_status = CHRONIC;
 
         // Calculate the mean time to next event, adjusting for SPVL.
@@ -1396,6 +1401,11 @@ void carry_out_HIV_events_per_timestep(double t, patch_struct *patch, int p,
             // Person died so add 1 to death counter
             patch[p].DEBUG_NDEATHS = patch[p].DEBUG_NDEATHS + 1;
             
+            // Remove unawared people
+            if (indiv->HIV_awareness == UNAWARE) {
+                patch[p].n_unaware[indiv->gender]--;
+            }
+
             // Remove individual from cascade events
             remove_from_cascade_events(indiv, patch[p].cascade_events, patch[p].n_cascade_events,
                 patch[p].size_cascade_events,t, patch[p].param);
@@ -1614,6 +1624,7 @@ int joins_preart_care(individual* indiv, parameters *param, double t,
     int is_popart = (indiv->next_cascade_event >= NCASCADEEVENTS_NONPOPART);
     int year_idx = (int) floor(t) - param->start_time_simul;
     double p_collects_hiv_test; 
+    double p_collect_cd4_test_results_cd4_nonpopart;
     
     // Check if this person is part of the background care cascade or not
     if(is_popart == NOTPOPART){
@@ -1630,11 +1641,22 @@ int joins_preart_care(individual* indiv, parameters *param, double t,
             
             // If an individual collects their HIV test results then they also 
             // have their first CD4 test
+            indiv -> HIV_awareness = AWARE;
             cumulative_outputs->N_total_CD4_tests_nonpopart++;
             calendar_outputs->N_calendar_CD4_tests_nonpopart[year_idx]++;
             
             // returns whether they drop out (0) or stays in cascade (1)
-            return gsl_ran_bernoulli(rng, param->p_collect_cd4_test_results_cd4_nonpopart);
+            // after 2018, number of people get cd4 test results increases year by year, and reach 0.95 in 2030
+            p_collect_cd4_test_results_cd4_nonpopart = param->p_collect_cd4_test_results_cd4_nonpopart;
+            if ((int)floor(t) > 2018) {
+                if ((int)floor(t) >= 2030) {
+                    p_collect_cd4_test_results_cd4_nonpopart = 0.95;
+                }
+                else{
+                    p_collect_cd4_test_results_cd4_nonpopart = scaling_p_collect_cd4_test_results_cd4_nonpopart((int)floor(t), p_collect_cd4_test_results_cd4_nonpopart);
+                }
+            }
+            return gsl_ran_bernoulli(rng, p_collect_cd4_test_results_cd4_nonpopart);
         }else{
             // If the individual does not collect HIV test results then assume they
             // drop out of the care cascade (return 0)
@@ -1643,6 +1665,7 @@ int joins_preart_care(individual* indiv, parameters *param, double t,
     }else{
         // Individual is in PopART.  
         // Assume everyone in PopART gets their HIV test and has a CD4 test
+        indiv -> HIV_awareness = AWARE;
         cumulative_outputs->N_total_CD4_tests_popart++;
         calendar_outputs->N_calendar_CD4_tests_popart[year_idx]++;
         
@@ -2505,6 +2528,19 @@ void probability_get_hiv_test_in_next_window(double *p_test, double *t_gap, int 
     }else{
         p_test[MALE] = param->p_HIV_background_testing_female_current*param->RR_HIV_background_testing_male;
         p_test[FEMALE] = param->p_HIV_background_testing_female_current;
+
+        /* after 2018, number of people get background testing increases year by year, probability can't be greater than 1*/
+        if (year > 2018) {
+            p_test[MALE] = scaling_p_HIV_background_testing_female_current(year, param->p_HIV_background_testing_female_current)*param->RR_HIV_background_testing_male;
+            p_test[FEMALE] = scaling_p_HIV_background_testing_female_current(year, param->p_HIV_background_testing_female_current);
+        }
+        if (p_test[MALE] > 1) {
+            p_test[MALE] = 1;
+        }
+        if (p_test[FEMALE] > 1) {
+            p_test[FEMALE] = 1;
+        }
+
         *t_gap = 1;
     }
 }
@@ -2713,6 +2749,7 @@ void hiv_test_process(individual* indiv, parameters *param, double t, individual
 
     indiv->ART_status = ARTNAIVE;  /* Status changes as now known positive. */
 
+    int temp_aware = indiv->HIV_awareness;
     /* If ART has started then there are 3 possibilities for the next cascade event
      *  - drops out, waits until eligible, starts ART. */
     if (t>=param->COUNTRY_ART_START){       
@@ -2796,6 +2833,10 @@ void hiv_test_process(individual* indiv, parameters *param, double t, individual
             debug->art_vars[p].cascade_transitions[ARTNEG+1][ARTNAIVE+1]++;
             schedule_generic_cascade_event(indiv, param, time_cd4, cascade_events, n_cascade_events, size_cascade_events,t);
         }
+    }
+    // if the indidvidual became aware (i.e. collect the tests and unaware before) 
+    if (temp_aware != indiv->HIV_awareness) {
+        patch[p].n_unaware[indiv->gender]--;
     }
 }
 
